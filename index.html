@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+
+<script src="https://www.gstatic.com/firebasejs/4.9.0/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-firestore.js"></script>
+
+  </head>
+  <body>
+      <div id='frame' style="height: 350px; width: 700px;">
+       <iframe id='' width="100%" height="100%" src="https://www.youtube.com/embed/I6Fdm03W9z4"  frameborder="0" allowfullscreen></iframe>
+       </div>  
+<!--  
+  https://openload.co/embed/2eolxS6_kQA/
+  <iframe width="854" height="480" src="" frameborder="0" allowfullscreen></iframe> 
+ -->
+      <button id='pausing' >pause</button>
+      <button id='playing' >play</button>
+
+      <input id='notification' type="" name="" >
+      <button id='sending'>send</button>
+
+      <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+<script src="./jquery-3.3.1.min.js"></script>
+<script>if (window.module) module = window.module;</script>
+
+    <h1>Hello World!</h1>
+    <!-- All of the Node.js APIs are available in this renderer process. -->
+    We are using Node.js <script>document.write(process.versions.node)</script>,
+    Chromium <script>document.write(process.versions.chrome)</script>,
+    and Electron <script>document.write(process.versions.electron)</script>.
+
+  <script>
+  
+
+  $( document ).ready(function() {
+$('#frame').on('click', function(event) {console.log("clicked") });    console.log( "ready!" );
+  });
+      var Video;;
+
+
+      require('./renderer.js')
+
+            const { ipcRenderer } = require('electron');
+
+            // Some data that will be sent to the main process
+            let Data = {
+                message: "Hi",
+                someData: "Let's go"
+            };
+
+            // Send information to the main process
+            // if a listener has been set, then the main process
+            // will react to the request !
+
+
+      setInterval(function() {
+        if(!Video)
+        {
+          console.log(document.querySelectorAll("iframe")[0]['contentDocument'].getElementsByTagName("video")[0])
+          Video = document.querySelectorAll("iframe")[0]['contentDocument'].getElementsByTagName("video")[0];
+          // Video.pause();
+
+          player = Video;
+
+          Video.src += "&autoplay=1";
+          setTimeout(function(){Video.pause()}, 1000);
+
+
+        }
+      }, 3000);
+
+    var config = {
+      apiKey: "AIzaSyD3qZCR8rCF8ii8kc0uA8Gi6OWqztieyII",
+      authDomain: "chat-app-4ac58.firebaseapp.com",
+      databaseURL: "https://chat-app-4ac58.firebaseio.com",
+      projectId: "chat-app-4ac58",
+      storageBucket: "chat-app-4ac58.appspot.com",
+      messagingSenderId: "68492580432"
+    };
+
+    firebase.initializeApp(config);
+
+    var firestore = firebase.firestore();
+    var docRef = firestore.collection("user");
+    var roomRef = firestore.doc("room/I9jOjmYNn1R3MvgdvxV9");
+
+      document.getElementById("playing").onclick = function() {
+        // roomRef.set({
+        //   video_state:'play'
+        // }).then(()=>{
+        //   console.log('Updated: video_state: play')
+        // }).catch((error)=>{
+        //   console.log('error: '+ error)
+        // })
+        roomRef.update({
+            video_state:"play"
+        }).then(function() {
+            console.log("Document successfully updated!");
+        });
+
+        // video = document.querySelectorAll("iframe")[0]['contentDocument'].getElementsByTagName("video")[0];
+        // video.play();
+      };
+
+      document.getElementById("pausing").onclick = function() {
+
+        roomRef.update({
+            video_state:"pause"
+        }).then(function() {
+            console.log("Document successfully updated!");
+        });
+        video = document.querySelectorAll("iframe")[0]['contentDocument'].getElementsByTagName("video")[0];
+        video.pause();
+
+      };
+      document.getElementById("sending").onclick = function() {
+        ipcRenderer.send('request-mainprocess-action', Data);
+      };
+
+
+
+  
+
+    console.log(roomRef)
+    firestore.collection("room").get().then(function(querySnapshot) {
+      querySnapshot.forEach(function(doc) {
+          // doc.data() is never undefined for query doc snapshots
+          console.log(doc.id, " => ", doc.data());
+      });
+    });
+    getRealTimeUpdate = ()=>{
+      roomRef.onSnapshot(function(doc){
+        if(doc && doc.exists){
+          Video = document.querySelectorAll("iframe")[0]['contentDocument'].getElementsByTagName("video")[0];
+          if (doc.data().video_state == "pause") {
+            console.log(Video)
+            console.log('pause')
+            Video.pause();
+          }
+          if (doc.data().video_state == "play") {
+            console.log(Video)
+
+            console.log('play')
+            Video.play();
+          }
+          console.log(doc.data())
+        }
+      })
+    }
+    function pauseVideo()
+    {
+
+    }
+    getRealTimeUpdate();
+    var checkInterval  = 1000.0 // check every 50 ms (do not use lower values)
+    var lastPlayPos    = 0
+    var currentPlayPos = 0
+    var bufferingDetected = false;
+
+    var player = document.getElementById('frame')
+
+    setInterval(checkBuffering, checkInterval)
+    function checkBuffering() {
+        currentPlayPos = player.currentTime
+
+        // checking offset should be at most the check interval
+        // but allow for some margin
+        var offset = (checkInterval - 20) / 1000
+
+        // if no buffering is currently detected,
+        // and the position does not seem to increase
+        // and the player isn't manually paused...
+        if (
+                !bufferingDetected 
+                && currentPlayPos < (lastPlayPos + offset)
+                && !player.paused
+            ) {
+            console.log("buffering")
+            bufferingDetected = true
+        }
+
+        // if we were buffering but the player has advanced,
+        // then there is no buffering
+        if (
+            bufferingDetected 
+            && currentPlayPos > (lastPlayPos + offset)
+            && !player.paused
+            ) {
+            console.log("not buffering anymore")
+            bufferingDetected = false
+        }
+        lastPlayPos = currentPlayPos
+    }
+
+    </script>
+  </body>
+</html>
